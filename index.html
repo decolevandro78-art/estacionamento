@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador de estacionamento</title>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e4e2dc;--ink:#1d2024;--asfalto:#30343b;--linha:#efe6c4;--verde:#3ddc84;--verm:#ff4d4d;--painel:#0b0d0f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171a;--ink:#e8e6e0}}
+:root[data-theme="dark"]{--bg:#15171a;--ink:#e8e6e0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow Condensed",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px 12px;gap:14px}
+.seletor{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.seletor button{font:700 19px "Barlow Condensed",sans-serif;padding:7px 16px;border-radius:8px;border:2px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.seletor button.ativo{background:var(--ink);color:var(--bg)}
+.seletor button:focus-visible{outline:3px solid #3e8ef7;outline-offset:2px}
+#wrap{position:relative}
+#app{width:1056px;display:flex;gap:20px;align-items:flex-end;transform-origin:0 0}
+.totem{width:236px;flex:none;display:flex;flex-direction:column;align-items:center;margin-bottom:22px}
+.totem::after{content:"";width:44px;height:var(--poste,110px);background:linear-gradient(90deg,#34383e,#6d747d 50%,#34383e);box-shadow:0 12px 0 10px #2a2e33}
+.placa{width:100%;background:#2a2e33;color:#efe6c4;text-align:center;padding:8px;border-radius:14px 14px 0 0;font:24px "DotGothic16",monospace;letter-spacing:6px}
+.painel{width:100%;background:var(--painel);border-radius:0 0 14px 14px;padding:12px;border:3px solid #2a2e33;border-top:none;display:grid;gap:6px}
+.info{grid-column:1/-1;grid-row:1;display:flex;flex-direction:column;gap:2px;font:17px "DotGothic16",monospace;padding:2px 2px 6px}
+.via{grid-column:1/-1;grid-row:3;display:flex;justify-content:space-between;align-items:center;padding:0 8px;background:#1c1f23;border-radius:4px;font:11px "DotGothic16",monospace;color:#efe6c4;letter-spacing:1px}
+.marca{grid-column:1/-1;grid-row:2;font:11px "DotGothic16",monospace;color:#efe6c4;letter-spacing:1px;line-height:1;align-self:end}
+.cel{display:flex;align-items:center;justify-content:center;border-radius:5px;border:3px dotted var(--verde);color:var(--verde);text-shadow:0 0 8px var(--verde);box-shadow:0 0 10px #3ddc8455;font:20px "DotGothic16",monospace;transition:all .2s}
+.estreita .cel{font-size:12px;border-width:2px}
+.cel.ocupada{border-color:var(--verm);color:var(--verm);text-shadow:0 0 8px var(--verm);box-shadow:0 0 10px #ff4d4d66;background:#ff4d4d22}
+#lote{position:relative;width:800px;height:440px;background:var(--asfalto);border-radius:10px;overflow:hidden;flex:none}
+.t-predio,.t-shopping{background:#1b1c20;box-shadow:inset 0 0 0 10px #3a3d42}
+.t-predio::after,.t-shopping::after{content:"";position:absolute;inset:0;pointer-events:none;background:rgba(0,0,0,.78);-webkit-mask-image:var(--mk);-webkit-mask-composite:source-in;mask-image:var(--mk);mask-composite:intersect}
+.t-shopping .vaga{border-width:3px;font-size:13px}
+.mini .cel{font-size:0;border:1px solid var(--verde);border-radius:2px;box-shadow:none;background:#3ddc8433}
+.mini .cel.ocupada{background:var(--verm);border-color:var(--verm)}
+.t-loja::after{content:"LOJA";position:absolute;left:0;right:0;bottom:0;height:96px;background:#6b4a3a;border-top:8px solid #8a6a58;display:flex;align-items:center;justify-content:center;font:700 34px "Barlow Condensed",sans-serif;letter-spacing:12px;color:#f3e3c8}
+.corr{position:absolute;left:20px;top:0;width:80px;height:410px;background:#ffffff0c}
+.rampa{position:absolute;left:24px;top:0;width:72px;height:26px;background:repeating-linear-gradient(135deg,#d9b21a 0 8px,#222 8px 16px);opacity:.85}
+.faixav{position:absolute;left:58px;top:30px;width:4px;height:370px;background:repeating-linear-gradient(180deg,var(--linha) 0 22px,transparent 22px 46px);opacity:.5}
+.pilar{position:absolute;width:20px;height:20px;background:#5a5f67;border-radius:3px;box-shadow:0 0 0 2px #1b1c1f}
+.faixa{position:absolute;left:0;right:0;height:4px;background:repeating-linear-gradient(90deg,var(--linha) 0 26px,transparent 26px 54px);opacity:.55}
+.rot{position:absolute;font-size:17px;font-weight:700;letter-spacing:2px;color:var(--linha);opacity:.75}
+.vaga{position:absolute;border:5px dotted var(--verde);border-radius:6px;background:#ffffff08;box-shadow:0 0 14px #3ddc8466,inset 0 0 14px #3ddc8422;cursor:pointer;color:var(--linha);font:700 22px "Barlow Condensed",sans-serif;padding:0;transition:background .2s}
+.vaga:hover{background:#ffffff14}
+.vaga:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.vaga.ocupada{border-color:var(--verm);box-shadow:0 0 14px #ff4d4d88,inset 0 0 14px #ff4d4d33}
+.vaga span{position:absolute;left:0;right:0;text-align:center;opacity:.8;top:50%;transform:translateY(-50%)}
+.carro{position:absolute;left:0;top:0;width:56px;height:30px;border-radius:9px;background:var(--cor);transition-property:transform;transition-timing-function:ease-in-out;box-shadow:0 3px 6px #0007;will-change:transform;pointer-events:none}
+.carro i{position:absolute;display:block}
+.vid{left:32px;top:4px;width:12px;height:22px;background:#12202c;border-radius:3px}
+.tras{left:8px;top:5px;width:8px;height:20px;background:#12202c99;border-radius:3px}
+.far{right:0;width:4px;height:7px;background:#fff6c0;border-radius:2px;top:3px}
+.far.f2{top:20px}
+.btn-totem{position:absolute;top:8px;right:8px;z-index:5;font:700 15px "Barlow Condensed",sans-serif;padding:5px 12px;border-radius:7px;border:2px solid #efe6c4;background:#0b0d0fcc;color:#efe6c4;cursor:pointer}
+.btn-totem:focus-visible{outline:3px solid #3e8ef7;outline-offset:2px}
+.subtotem{position:absolute;z-index:2;width:24px;height:24px;padding:0;border:2px solid #5ad1ff;border-radius:4px;background:#0b0d0f;color:#5ad1ff;font:700 11px "DotGothic16",monospace;cursor:pointer;box-shadow:0 0 10px #5ad1ff99}
+.subtotem:hover{background:#12303d}
+.subtotem:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.fpv{position:absolute;inset:0;z-index:10;background:#000}
+.fpv canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:#efe6c4;font:700 18px "Barlow Condensed",sans-serif;text-shadow:0 1px 4px #000}
+.hud button{font:inherit;padding:4px 12px;border-radius:7px;border:2px solid #efe6c4;background:#0b0d0fcc;color:#efe6c4;cursor:pointer}
+.hud button:focus-visible{outline:3px solid #3e8ef7;outline-offset:2px}
+.dica{font-size:19px;opacity:.75;text-align:center;max-width:800px;margin:0}
+</style>
+</head>
+<body>
+<div class="seletor" id="seletor" role="group" aria-label="Escolher estacionamento"></div>
+<div id="wrap"><button class="btn-totem" id="btnTotem" aria-pressed="true">Ocultar totem</button><div id="app">
+  <div class="totem" id="totem"><div class="placa">VAGAS</div><div class="painel" id="painel" aria-label="Mapa do estacionamento"></div></div>
+  <div id="lote"></div>
+</div></div>
+<p class="dica">Clique numa vaga livre para estacionar. Clique numa vaga ocupada para o carro sair.</p>
+<script>
+const ml=[];'ABCDEFGH'.split('').forEach((l,i)=>ml.push({y:[30,146,206,322,382,498,558,674][i],rot:i%2?90:-90,ly:[118,118,294,294,470,470,646,646][i],lado:l}));
+const luzesShop=[[60,50],[60,300],[60,600]];[118,294,470,646].forEach(y=>[250,600,950].forEach(x=>luzesShop.push([x,y])));
+const L={
+  aberto:{nome:'Estacionamento aberto',per:4,w:140,h:150,gap:12,x0:102,W:800,H:440,tw:236,mxo:40,ruas:[{ly:220,n:0,s:1}],rows:[{y:20,rot:-90,ly:220},{y:270,rot:90,ly:220}]},
+  predio:{nome:'Garagem do prédio',per:6,w:92,h:84,gap:8,x0:130,W:800,H:440,tw:236,canto:true,map:'rarra',cellH:50,aisleH:14,cgap:6,pcols:[1,3],pys:[104,334],luzes:[[60,50],[400,145],[400,375]],r:130,mxo:16,ruas:[{ly:145,n:0,s:1},{ly:375,n:2,s:null}],rows:[{y:30,rot:-90,ly:145,lado:'A'},{y:176,rot:90,ly:145,lado:'B'},{y:260,rot:-90,ly:375,lado:'C'}]},
+  shopping:{nome:'Garagem do shopping',per:18,w:44,h:60,gap:4,x0:130,W:1070,H:780,tw:380,canto:true,map:'rarrarrarrar',cellH:16,aisleH:8,cgap:3,pcols:[3,7,11,15],pys:[80,256,432,608],luzes:luzesShop,r:170,cheio:true,mxo:16,ruas:[{ly:118,n:0,s:1},{ly:294,n:2,s:3},{ly:470,n:4,s:5},{ly:646,n:6,s:7}],rows:ml},
+  loja:{nome:'Loja (uma fileira)',per:6,w:112,h:170,gap:10,x0:39,W:800,H:440,tw:236,mxo:24,ruas:[{ly:270,n:0,s:null}],rows:[{y:40,rot:-90,ly:270}]}
+};
+const K=matchMedia('(prefers-reduced-motion: reduce)').matches?0.25:1;
+const cores=['#e5484d','#3e8ef7','#f5c542','#8e7cf0','#f08a3c','#e8e8e8','#37b58f'];
+const lote=document.getElementById('lote'),painel=document.getElementById('painel'),totem=document.getElementById('totem'),app=document.getElementById('app'),wrap=document.getElementById('wrap'),sel=document.getElementById('seletor');
+const wait=ms=>new Promise(r=>setTimeout(r,ms*K));
+let cur,S=[],cel=[],fpv=-1;
+const fpvEl=document.createElement('div');fpvEl.className='fpv';fpvEl.style.display='none';fpvEl.innerHTML='<canvas></canvas><div class="hud"></div>';
+let totemOn=true;const btnT=document.getElementById('btnTotem');
+function aplicaTotem(){totem.style.display=totemOn?'':'none';app.style.width=((totemOn?cur.tw+20:0)+cur.W)+'px';btnT.textContent=totemOn?'Ocultar totem':'Exibir totem';btnT.setAttribute('aria-pressed',totemOn);fit()}
+btnT.onclick=()=>{totemOn=!totemOn;aplicaTotem()};
+Object.keys(L).forEach(k=>{const b=document.createElement('button');b.textContent=L[k].nome;b.onclick=()=>monta(k);b.dataset.k=k;sel.appendChild(b)});
+function monta(key){
+  cur=L[key];S=[];cel=[];
+  [...sel.children].forEach(b=>b.classList.toggle('ativo',b.dataset.k===key));
+  lote.className='t-'+key;lote.innerHTML='';
+  lote.style.width=cur.W+'px';lote.style.height=cur.H+'px';
+  totem.style.width=cur.tw+'px';
+  totem.style.setProperty('--poste',cur.canto?'30px':'110px');
+  if(cur.luzes)lote.style.setProperty('--mk',cur.luzes.map(([x,y])=>'radial-gradient(circle '+cur.r+'px at '+x+'px '+y+'px,transparent 0,#000 100%)').join(','));
+  let h='';
+  if(cur.canto){
+    h+='<div class="corr" style="height:'+(cur.H-30)+'px"></div><div class="rampa"></div><div class="faixav" style="height:'+(cur.H-70)+'px"></div>';
+    [...new Set(cur.rows.map(r=>r.ly))].forEach(ly=>{h+='<div class="faixa" style="top:'+(ly-2)+'px;left:100px;right:80px"></div>'});
+    h+='<div class="rot" style="left:24px;top:34px;font-size:13px;line-height:1.1">ENTRADA<br>E SAÍDA</div>';
+  }else{
+    const ly=cur.rows[0].ly;
+    h+='<div class="faixa" style="top:'+(ly-2)+'px"></div><div class="rot" style="left:14px;top:'+(ly-26)+'px">ENTRADA</div><div class="rot" style="right:14px;top:'+(ly-26)+'px">SAÍDA</div>';
+  }
+  lote.insertAdjacentHTML('beforeend',h);
+  painel.innerHTML='<div class="info" id="lcd"></div>';
+  painel.classList.toggle('estreita',cur.per>4&&cur.per<=8);painel.classList.toggle('mini',cur.per>8);
+  let gRow=[2,4];
+  if(cur.canto){
+    painel.style.gap=cur.cgap+'px';
+    painel.style.gridTemplateColumns='14px repeat('+cur.per+',1fr)';
+    painel.style.gridTemplateRows='auto 14px '+[...cur.map].map(t=>(t==='r'?cur.cellH:cur.aisleH)+'px').join(' ');
+    painel.insertAdjacentHTML('beforeend','<div class="marca">▼ ENTRADA E SAÍDA</div><div style="grid-column:1;grid-row:3/'+(3+cur.map.length)+';background:#1c1f23;border-radius:3px"></div>');
+    gRow=[];
+    [...cur.map].forEach((t,k)=>{if(t==='r')gRow.push(3+k);else painel.insertAdjacentHTML('beforeend','<div class="via" style="grid-column:2/-1;grid-row:'+(3+k)+'"></div>')});
+  }else{
+    painel.style.gap='6px';
+    painel.style.gridTemplateColumns='repeat('+cur.per+',1fr)';
+    painel.style.gridTemplateRows=cur.rows.length>1?'auto 68px 26px 68px':'auto 68px 26px';
+    painel.insertAdjacentHTML('beforeend','<div class="via"><span>ENTRADA ▶</span><span>▶ SAÍDA</span></div>');
+  }
+  cur.rows.forEach((R,ri)=>{
+    for(let col=0;col<cur.per;col++){
+      const i=S.length,x=cur.x0+col*(cur.w+cur.gap);
+      const nome=R.lado?R.lado+(col+1):i+1;
+      const el=document.createElement('button');
+      el.className='vaga';
+      el.style.cssText='left:'+x+'px;top:'+R.y+'px;width:'+cur.w+'px;height:'+cur.h+'px';
+      el.setAttribute('aria-label','Vaga '+nome);el.innerHTML='<span>'+nome+'</span>';
+      lote.appendChild(el);
+      const m=document.createElement('div');m.className='cel';m.textContent=nome;m.style.gridRow=gRow[ri];m.style.gridColumn=col+(cur.canto?2:1);painel.appendChild(m);cel.push(m);
+      const v={nome,lado:R.lado,el,cx:x+cur.w/2,cy:R.y+cur.h/2,rot:R.rot,ly:R.ly,ocupada:false,busy:false,car:null};
+      el.onclick=()=>clique(v);S.push(v);
+    }
+  });
+  if(cur.cheio)S.forEach(v=>{const c=v.car=mkCar();place(c,v.cx,v.cy,v.rot,0);v.ocupada=true});
+  if(cur.pcols){cur.pcols.forEach(c=>{const px=cur.x0+(c+1)*(cur.w+cur.gap)-cur.gap/2-10;cur.pys.forEach(py=>{const p=document.createElement('div');p.className='pilar';p.style.cssText='left:'+px+'px;top:'+py+'px';lote.appendChild(p)})})}
+  cur.ruas.forEach((R,i)=>{
+    const mx=cur.x0+cur.per*(cur.w+cur.gap)+cur.mxo,my=cur.canto?R.ly:R.ly-45;
+    const b=document.createElement('button');b.className='subtotem';b.textContent='R'+(i+1);
+    b.setAttribute('aria-label','Ver a rua '+(i+1)+' em primeira pessoa');
+    b.style.left=(mx-12)+'px';b.style.top=(my-12)+'px';b.onclick=()=>abreFpv(i);lote.appendChild(b);
+  });
+  lote.appendChild(fpvEl);fecha();
+  atualizar();aplicaTotem();
+}
+function place(c,cx,cy,rot,ms){c.style.transitionDuration=(ms*K)+'ms';c.style.transform='translate('+(cx-28)+'px,'+(cy-15)+'px) rotate('+rot+'deg)'}
+function mkCar(){const c=document.createElement('div');c.className='carro';const cor=cores[Math.floor(Math.random()*cores.length)];c.dataset.cor=cor;c.style.setProperty('--cor',cor);c.innerHTML='<i class="tras"></i><i class="vid"></i><i class="far"></i><i class="far f2"></i>';lote.appendChild(c);return c}
+function livres(l){return S.filter(v=>v.lado===l&&!v.ocupada).length}
+function linhasLivres(){const ls=cur.rows.map(r=>r.lado),out=[];for(let i=0;i<ls.length;i+=4)out.push('<span style="font-size:12px;color:#efe6c4;white-space:pre">'+ls.slice(i,i+4).map(l=>l+':'+livres(l)).join('  ')+(i+4>=ls.length?' livres':'')+'</span>');return out.join('')}
+function atualizar(){
+  const oc=S.filter(v=>v.ocupada).length;
+  document.getElementById('lcd').innerHTML='<span style="color:var(--verde)">Disponiveis: '+(S.length-oc)+'</span><span style="color:var(--verm)">Ocupadas: '+oc+'</span>'+(cur.canto?linhasLivres():'');
+  S.forEach((v,i)=>{v.el.classList.toggle('ocupada',v.ocupada);cel[i].classList.toggle('ocupada',v.ocupada)});
+  desenhaFpv();
+}
+const T=a=>Math.max(250,Math.round(a/0.7));
+async function clique(v){
+  if(v.busy)return;v.busy=true;const ly=v.ly,dv=T(ly+40),dh=T(Math.abs(v.cx-60));
+  if(!v.ocupada){
+    const c=v.car=mkCar();
+    if(cur.canto){
+      place(c,60,-40,90,0);c.getBoundingClientRect();
+      place(c,60,ly,90,dv);await wait(dv+20);
+      place(c,60,ly,0,350);await wait(370);
+    }else{place(c,-40,ly,0,0);c.getBoundingClientRect()}
+    const dd=cur.canto?dh:T(v.cx+40);
+    place(c,v.cx,ly,0,dd);await wait(dd+20);
+    place(c,v.cx,ly,v.rot,350);await wait(370);
+    place(c,v.cx,v.cy,v.rot,550);await wait(570);
+    v.ocupada=true;atualizar();
+  }else{
+    const c=v.car;
+    place(c,v.cx,ly,v.rot,550);await wait(570);
+    v.ocupada=false;atualizar();
+    if(cur.canto){
+      const sx=v.rot<0?-180:180,up=v.rot<0?-90:270;
+      place(c,v.cx,ly,sx,350);await wait(370);
+      place(c,60,ly,sx,dh);await wait(dh+20);
+      place(c,60,ly,up,350);await wait(370);
+      place(c,60,-70,up,dv);await wait(dv+20);
+    }else{
+      const de=T(860-v.cx);
+      place(c,v.cx,ly,0,350);await wait(370);
+      place(c,860,ly,0,de);await wait(de+20);
+    }
+    c.remove();v.car=null;
+  }
+  v.busy=false;
+}
+
+function nomeFileira(ri){const R=cur.rows[ri];return R.lado?'fileira '+R.lado:'vagas '+(ri*cur.per+1)+' a '+((ri+1)*cur.per)}
+function abreFpv(i){
+  fpv=i;fpvEl.style.display='block';
+  const cv=fpvEl.firstChild;cv.width=cur.W;cv.height=cur.H;
+  const h=fpvEl.lastChild;h.style.fontSize=Math.round(cur.W/45)+'px';h.innerHTML='';
+  const R=cur.ruas[i],t=document.createElement('span');
+  t.textContent='Rua '+(i+1)+': '+[R.n,R.s].filter(r=>r!=null).map(nomeFileira).join(' e ');h.appendChild(t);
+  cur.ruas.forEach((_,j)=>{if(j!==i){const b=document.createElement('button');b.textContent='Rua '+(j+1);b.onclick=()=>abreFpv(j);h.appendChild(b)}});
+  const x=document.createElement('button');x.textContent='Voltar à vista de cima';x.onclick=fecha;h.appendChild(x);
+  desenhaFpv();
+}
+function fecha(){fpv=-1;fpvEl.style.display='none'}
+function hexRgb(c){const n=parseInt(c.slice(1),16);return[n>>16,(n>>8)&255,n&255]}
+function desenhaFpv(){
+  if(fpv<0)return;
+  const cv=fpvEl.firstChild,g=cv.getContext('2d'),W=cv.width,H=cv.height,R=cur.ruas[fpv];
+  const esc=!!cur.canto,aw=1.6,dp=2,eye=.62,wh=1.15,f=W*.11,hy=H*.46,cx=W/2,n=cur.per,z0=.8,zE=z0+n,xo=aw+dp;
+  const P=(x,y,z)=>[cx+f*x/z,hy-f*(y-eye)/z];
+  const fog=z=>esc?Math.max(.22,1-.05*(z-z0)):Math.max(.55,1-.02*(z-z0));
+  const rgb=(c,z,m)=>{const k=fog(z)*(m||1);return'rgb('+c.map(v=>Math.min(255,Math.round(v*k))).join(',')+')'};
+  const Q=(a,fill,stroke,lw)=>{g.beginPath();a.forEach((p,i)=>{const q=P(p[0],p[1],p[2]);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath();if(fill){g.fillStyle=fill;g.fill()}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw||1;g.stroke()}};
+  g.setLineDash([]);
+  if(esc){g.fillStyle='#0d0e10';g.fillRect(0,0,W,H)}
+  else{const sk=g.createLinearGradient(0,0,0,hy);sk.addColorStop(0,'#5d8fc7');sk.addColorStop(1,'#c9e0f5');g.fillStyle=sk;g.fillRect(0,0,W,hy);g.fillStyle='#8a8f98';g.fillRect(0,hy,W,H-hy)}
+  for(let k=0;k<n;k++){
+    const a=z0+k,b=a+1;
+    Q([[-xo,0,a],[xo,0,a],[xo,0,b],[-xo,0,b]],rgb([58,62,70],a));
+    if(esc){
+      Q([[-xo,wh,a],[xo,wh,a],[xo,wh,b],[-xo,wh,b]],rgb([34,36,41],a));
+      if(k%3===0)Q([[-.45,wh-.01,a+.2],[.45,wh-.01,a+.2],[.45,wh-.01,a+.7],[-.45,wh-.01,a+.7]],rgb([255,244,205],a,.9));
+    }
+    if(k%2===0)Q([[-.04,0,a+.1],[.04,0,a+.1],[.04,0,a+.6],[-.04,0,a+.6]],rgb([239,230,196],a,.7));
+  }
+  if(esc){
+    Q([[-xo,0,zE],[xo,0,zE],[xo,wh,zE],[-xo,wh,zE]],rgb([42,44,50],zE));
+    const q=P(0,.55,zE),sz=f*.32/zE;
+    if(sz>5){g.fillStyle=rgb([239,230,196],zE);g.font='700 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('◀ ENTRADA E SAÍDA',q[0],q[1])}
+  }
+  const wallH=esc?wh:wh*.5;
+  for(let k=n-1;k>=0;k--){
+    const a=z0+k,b=a+1,col=n-1-k;
+    [[-1,R.s],[1,R.n]].forEach(([sd,ri])=>{
+      const X=sd*xo;
+      Q([[X,0,a],[X,wallH,a],[X,wallH,b],[X,0,b]],rgb(ri==null&&cur.canto===undefined?[150,100,80]:[78,82,90],a),'rgba(0,0,0,.35)',1);
+      if(ri==null)return;
+      const v=S[ri*n+col],led=v.ocupada?[255,77,77]:[61,220,132],lc=rgb(led,a,1);
+      Q([[sd*aw,0,a],[X,0,a],[X,0,b],[sd*aw,0,b]],'rgba('+led.join(',')+',.13)',lc,Math.max(1,f*.05/a));
+      Q([[sd*aw,0,a],[X,0,a]],null,'rgba(239,230,196,.55)',Math.max(1,f*.03/a));
+      if(esc){
+        Q([[X,.78,a+.12],[X,1.02,a+.12],[X,1.02,b-.12],[X,.78,b-.12]],rgb(led,a));
+        const q=P(X,.9,a+.5),sz=f*.2/a;
+        if(sz>6){g.fillStyle='#0b0d0f';g.font='700 '+sz+'px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(v.nome,q[0],q[1])}
+      }
+      if(v.ocupada&&v.car){
+        const c=hexRgb(v.car.dataset.cor),x0=sd*(aw+.18),x1=sd*(aw+1.88),z1=a+.14,z2=b-.14,ch=.58;
+        Q([[x0,0,z1],[x1,0,z1],[x1,ch,z1],[x0,ch,z1]],rgb(c,a,.62));
+        Q([[x0,0,z1],[x0,ch,z1],[x0,ch,z2],[x0,0,z2]],rgb(c,a,.85));
+        Q([[x0,.3,z1+.08],[x0,.5,z1+.08],[x0,.5,z2-.08],[x0,.3,z2-.08]],rgb([18,26,34],a));
+        Q([[x0,.08,z1+.03],[x0,.17,z1+.03],[x0,.17,z1+.17],[x0,.08,z1+.17]],rgb([255,80,80],a));
+        Q([[x0,.08,z2-.17],[x0,.17,z2-.17],[x0,.17,z2-.03],[x0,.08,z2-.03]],rgb([255,80,80],a));
+        Q([[x0,ch,z1],[x1,ch,z1],[x1,ch,z2],[x0,ch,z2]],rgb(c,a,1.05));
+      }
+    });
+  }
+  const vg=g.createRadialGradient(cx,hy,H*.15,cx,hy,W*.62);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,esc?'rgba(0,0,0,.6)':'rgba(0,0,0,.25)');g.fillStyle=vg;g.fillRect(0,0,W,H);
+  g.font='700 '+Math.round(W/45)+'px sans-serif';g.textBaseline='top';g.fillStyle='#efe6c4';
+  g.textAlign='left';g.fillText('◀ '+(R.s!=null?nomeFileira(R.s):(cur.canto?'parede':'loja')),12,H*.9);
+  g.textAlign='right';g.fillText((R.n!=null?nomeFileira(R.n):'parede')+' ▶',W-12,H*.9);
+}
+function fit(){const aw=app.offsetWidth,s=Math.min(1,(innerWidth-24)/aw);app.style.transform='scale('+s+')';wrap.style.width=(aw*s)+'px';wrap.style.height=(app.offsetHeight*s)+'px'}
+addEventListener('resize',fit);
+monta('aberto');document.fonts&&document.fonts.ready.then(fit);
+</script>
+</body>
+</html>
